@@ -74,15 +74,17 @@ class PartHtmlError(Exception):
 
 __all__ = ['kicost']  # Only export this routine for use by the outside world.
 
+
 SEPRTR = ':'  # Delimiter between library:component, distributor:field, etc.
-                          
+
 logger = logging.getLogger('kicost')
 DEBUG_OVERVIEW = logging.DEBUG
 DEBUG_DETAILED = logging.DEBUG-1
 DEBUG_OBSESSIVE = logging.DEBUG-2
 
 # Altium requires a different part grouping function than KiCad.
-from .altium.altium import get_part_groups_altium
+from kicost.altium.altium import get_part_groups_altium
+# from .altium.altium import get_part_groups_altium
 
 # Import information about various distributors.
 from . import distributors as distributor_imports
@@ -141,7 +143,7 @@ field_name_translations.update(
 )
 
 
-def kicost(in_file, out_filename, user_fields, ignore_fields, variant, num_processes, 
+def kicost(in_file, out_filename, user_fields, ignore_fields, variant, num_processes,
         is_altium, exclude_dist_list, include_dist_list):
     '''Take a schematic input file and create an output file with a cost spreadsheet in xlsx format.'''
 
@@ -158,11 +160,11 @@ def kicost(in_file, out_filename, user_fields, ignore_fields, variant, num_proce
     if not is_altium:
         parts, prj_info = get_part_groups(in_file, ignore_fields, variant)
     else:
-        parts, prj_info = get_part_groups_altium(in_file, ignore_fields, variant)     
+        parts, prj_info = get_part_groups_altium(in_file, ignore_fields, variant)
 
     # Create an HTML page containing all the local part information.
     local_part_html = create_local_part_html(parts)
-    
+
     if logger.isEnabledFor(DEBUG_DETAILED):
         pprint.pprint(distributors)
 
@@ -189,7 +191,7 @@ def kicost(in_file, out_filename, user_fields, ignore_fields, variant, num_proce
 
         # Create a list to store the output from each process.
         results = list(range(len(args)))
-        
+
         # Define a callback routine for updating the scraping progress bar.
         def update(x):
             scraping_progress.update(1)
@@ -211,7 +213,7 @@ def kicost(in_file, out_filename, user_fields, ignore_fields, variant, num_proce
             parts[id].price_tiers = price_tiers
             parts[id].qty_avail = qty_avail
 
-    # Done with the scraping progress bar so delete it or else we get an 
+    # Done with the scraping progress bar so delete it or else we get an
     # error when the program terminates.
     del scraping_progress
 
@@ -483,9 +485,9 @@ def create_local_part_html(parts):
     '''Create HTML page containing info for local (non-webscraped) parts.'''
 
     global distributors
-    
+
     logger.log(DEBUG_OVERVIEW, 'Create HTML page for parts with custom pricing...')
-    
+
     doc, tag, text = Doc().tagtext()
     with tag('html'):
         with tag('body'):
@@ -557,7 +559,7 @@ def create_spreadsheet(parts, prj_info, spreadsheet_filename, user_fields, varia
 
     if len(variant) > 0:
         # Append an indication of the variant to the worksheet title.
-        # Remove any special characters that might be illegal in a 
+        # Remove any special characters that might be illegal in a
         # worksheet name since the variant might be a regular expression.
         WORKSHEET_NAME = WORKSHEET_NAME + '.' + re.sub(
                                 '[\[\]\\\/\|\?\*\:\(\)]','_',variant)
@@ -884,7 +886,7 @@ def add_globals_to_worksheet(wks, wrk_formats, start_row, start_col,
         col_ids = list(columns.keys())
         user_field_id = user_field.lower()
         if user_field_id not in col_ids:
-            # Put user fields immediately to right of the 'desc' column. 
+            # Put user fields immediately to right of the 'desc' column.
             desc_col = columns['desc']['col']
             # Push all existing fields to right of 'desc' over by one column.
             for id in col_ids:
@@ -1102,7 +1104,7 @@ def add_dist_to_worksheet(wks, wrk_formats, start_row, start_col,
         else:
             wks.write(row, start_col + columns['avail']['col'],
                 'NonStk', wrk_formats['not_stocked'])
-            wks.write_comment(row, start_col + columns['avail']['col'], 
+            wks.write_comment(row, start_col + columns['avail']['col'],
                 'This part is listed but is not normally stocked.')
 
         # Purchase quantity always starts as blank because nothing has been purchased yet.
@@ -1149,7 +1151,7 @@ def add_dist_to_worksheet(wks, wrk_formats, start_row, start_col,
             wks.write_comment(row, unit_price_col, price_break_info)
 
             # Conditional format to show the avaliable quantity is less than required.
-            wks.conditional_format(row, start_col + columns['avail']['col'], 
+            wks.conditional_format(row, start_col + columns['avail']['col'],
                 row, start_col + columns['avail']['col'], {
                     'type': 'cell',
                     'criteria': '<',

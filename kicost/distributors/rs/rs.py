@@ -29,7 +29,7 @@ currency = CurrencyConverter()
 def get_price_tiers(html_tree):
     '''Get the pricing tiers from the parsed tree of the RS Components product page.'''
     price_tiers = {}
-    
+
     try:
         qty_strs = []
         for qty in html_tree.find_all('div',class_='breakRangeWithoutUnit', itemprop='eligibleQuantity'):
@@ -52,7 +52,7 @@ def get_price_tiers(html_tree):
         # This happens when no pricing info is found in the tree.
         return price_tiers  # Return empty price tiers.
     return price_tiers
-    
+
 def get_part_num(html_tree):
     '''Get the part number from the farnell product page.'''
     try:
@@ -66,9 +66,9 @@ def get_part_num(html_tree):
 
 def get_qty_avail(html_tree):
     '''Get the available quantity of the part from the farnell product page.'''
-        
+
     try:
-        # Note that 'availability' is misspelled in the container class name!        
+        # Note that 'availability' is misspelled in the container class name!
         qty_str = html_tree.find('div', class_='floatLeft stockMessaging availMessageDiv bottom5').text
     except (AttributeError, ValueError):
         # No quantity found (not even 0) so this is probably a non-stocked part.
@@ -84,7 +84,7 @@ def get_qty_avail(html_tree):
 
 def get_part_html_tree(dist, pn, extra_search_terms='', url=None, descend=2, local_part_html=None):
     '''Find the RS Components HTML page for a part number and return the URL and parse tree.'''
-            
+
     # Use the part number to lookup the part using the site search function, unless a starting url was given.
     if url is None:
         url = 'http://it.rs-online.com/web/c/?searchTerm=' + urlquote(pn + ' ' + extra_search_terms, safe='')
@@ -104,6 +104,9 @@ def get_part_html_tree(dist, pn, extra_search_terms='', url=None, descend=2, loc
         except WEB_SCRAPE_EXCEPTIONS:
             logger.log(DEBUG_DETAILED,'Exception while web-scraping {} from {}'.format(pn, dist))
             pass
+        except UnicodeEncodeError:
+            logger.log(DEBUG_DETAILED,'Exception while web-scraping {} from {}: The part number code is not in ascii format'.format(pn, dist))
+
     else: # Couldn't get a good read from the website.
         logger.log(DEBUG_OBSESSIVE,'No HTML page for {} from {}'.format(pn, dist))
         raise PartHtmlError
@@ -119,7 +122,7 @@ def get_part_html_tree(dist, pn, extra_search_terms='', url=None, descend=2, loc
     if re.sub('[\W_]','',str.lower(pn)) not in re.sub('[\W_]','',str.lower(str(html))):
         logger.log(DEBUG_OBSESSIVE,'No part number {} in HTML page from {}'.format(pn, dist))
         raise PartHtmlError
-        
+
     # If the tree contains the tag for a product page, then just return it.
     if tree.find('div', class_='specTableContainer') is not None:
         return tree, url
@@ -146,8 +149,8 @@ def get_part_html_tree(dist, pn, extra_search_terms='', url=None, descend=2, loc
                 except TypeError:
                     #~ print('****************dist:',dist,'pn:**************************',pn)
                     continue
-            
-            
+
+
 
     #~ # If the tree is for a list of products, then examine the links to try to find the part number.
     #~ if tree.find('div', class_='srtnPageContainer') is not None:
@@ -189,12 +192,12 @@ def get_part_html_tree(dist, pn, extra_search_terms='', url=None, descend=2, loc
     raise PartHtmlError
 
 if __name__=='__main__':
-	
+
 	#~ html_tree=get_part_html_tree(dist='rs',pn='MSP430F5438AIPZ')
 	#~ html_tree=get_part_html_tree(dist='rs',pn='CC3200-LAUNCHXL')
     #~ html_tree=get_part_html_tree(dist='rs',pn='LM358PW')
     html_tree=get_part_html_tree(dist='rs',pn='MCP1252-33X50I/MS')
-    
+
     pt=get_price_tiers(html_tree[0])
     qt=get_qty_avail(html_tree[0])
     pn=get_part_num(html_tree[0])
@@ -205,5 +208,5 @@ if __name__=='__main__':
     print('****************')
     print(pn)
     print('****************')
-    
-    
+
+

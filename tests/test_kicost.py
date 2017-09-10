@@ -12,7 +12,6 @@ import unittest
 
 from kicost import kicost
 
-
 class TestKicost(unittest.TestCase):
 
     def setUp(self):

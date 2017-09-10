@@ -60,7 +60,7 @@ def get_price_tiers(html_tree):
         # This happens when no pricing info is found in the tree.
         return price_tiers  # Return empty price tiers.
     return price_tiers
-    
+
 def get_part_num(html_tree):
     '''Get the part number from the farnell product page.'''
     try:
@@ -121,6 +121,9 @@ def get_part_html_tree(dist, pn, extra_search_terms='', url=None, descend=2, loc
         except WEB_SCRAPE_EXCEPTIONS:
             logger.log(DEBUG_DETAILED,'Exception while web-scraping {} from {}'.format(pn, dist))
             pass
+        except UnicodeEncodeError:
+            logger.log(DEBUG_DETAILED,'Exception while web-scraping {} from {}: The part number code is not in ascii format'.format(pn, dist))
+
     else: # Couldn't get a good read from the website.
         logger.log(DEBUG_OBSESSIVE,'No HTML page for {} from {}'.format(pn, dist))
         raise PartHtmlError

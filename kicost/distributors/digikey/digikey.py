@@ -158,6 +158,8 @@ def get_part_html_tree(dist, pn, extra_search_terms='', url=None, descend=2, loc
             break
         except WEB_SCRAPE_EXCEPTIONS:
             logger.log(DEBUG_DETAILED,'Exception while web-scraping {} from {}'.format(pn, dist))
+        except UnicodeEncodeError:
+            logger.log(DEBUG_DETAILED,'Exception while web-scraping {} from {}: The part number code is not in ascii format'.format(pn, dist))
 
     else: # Couldn't get a good read from the website.
         logger.log(DEBUG_OBSESSIVE,'No HTML page for {} from {}'.format(pn, dist))
@@ -203,7 +205,7 @@ def get_part_html_tree(dist, pn, extra_search_terms='', url=None, descend=2, loc
                 logger.log(DEBUG_OBSESSIVE,'Found {} alternate packagings for {} from {}'.format(len(ap_urls), pn, dist))
                 ap_trees_and_urls = []  # Initialize as empty in case no alternate packagings are found.
                 try:
-                    ap_trees_and_urls = [get_part_html_tree(dist, pn, 
+                    ap_trees_and_urls = [get_part_html_tree(dist, pn,
                                      extra_search_terms, ap_url, descend=0)
                                      for ap_url in ap_urls]
                 except Exception:

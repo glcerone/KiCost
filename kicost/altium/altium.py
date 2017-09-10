@@ -25,6 +25,14 @@ import sys
 
 SEPRTR = ':'  # Delimiter between library:component, distributor:field, etc.
 
+# Stops UnicodeDecodeError exceptions.
+try:
+    reload(sys)
+    sys.setdefaultencoding('utf8')
+except NameError:
+    pass  # Happens if reload is attempted in Python 3.
+
+
 # Temporary class for storing part group information.
 class IdenticalComponents(object):
     pass
@@ -33,40 +41,46 @@ def get_part_groups_altium(in_file, ignore_fields, variant):
     '''Get groups of identical parts from an XML file and return them as a dictionary.'''
 
     ign_fields = [str(f.lower()) for f in ignore_fields]
-    
+
 
     def extract_fields(part, variant):
-        '''Extract XML fields from the part in a library or schematic.'''        
+        '''Extract XML fields from the part in a library or schematic.'''
 
         fields = {}
-        
-        if sys.version[0]=='2':
-            fields['footprint']=part['footprint1'].encode('ascii', 'ignore')
-            fields['libpart']=part['libref1'].encode('ascii', 'ignore')
-            fields['value']=part['value3'].encode('ascii', 'ignore')
-            fields['reference']=part['comment1'].encode('ascii', 'ignore')
-            fields['manf#']=part['manufacturer_part_number_11'].encode('ascii', 'ignore')
-        else:            
-            fields['footprint']=part['footprint1']
-            fields['libpart']=part['libref1']
-            fields['value']=part['value3']
-            fields['reference']=part['comment1']
-            fields['manf#']=part['manufacturer_part_number_11']
-                
+
+        fields['footprint'] = str(part['footprint1'])
+        fields['libpart'] = str(part['libref1'])
+        fields['value'] = str(part['value3'])
+        fields['reference'] = str(part['comment1'])
+        fields['manf#'] = str(part['manufacturer_part_number_11'])
+
+        # if sys.version[0]=='2':
+        #     fields['footprint']=part['footprint1'].encode('ascii', 'ignore')
+        #     fields['libpart']=part['libref1'].encode('ascii', 'ignore')
+        #     fields['value']=part['value3'].encode('ascii', 'ignore')
+        #     fields['reference']=part['comment1'].encode('ascii', 'ignore')
+        #     fields['manf#']=part['manufacturer_part_number_11'].encode('ascii', 'ignore')
+        # else:
+        #     fields['footprint']=part['footprint1']
+        #     fields['libpart']=part['libref1']
+        #     fields['value']=part['value3']
+        #     fields['reference']=part['comment1']
+        #     fields['manf#']=part['manufacturer_part_number_11']
+
         return fields
 
     # Read-in the schematic XML file to get a tree and get its root.
     logger.log(DEBUG_OVERVIEW, 'Get schematic XML...')
     root = BeautifulSoup(in_file, 'lxml')
-    
+
     # Make a dictionary from the fields in the parts library so these field
     # values can be instantiated into the individual components in the schematic.
     logger.log(DEBUG_OVERVIEW, 'Get parts library...')
     libparts = {}
     component_groups = {}
-    
+
     for p in root.find('rows').find_all('row'):
-					
+
         # Get the values for the fields in each library part (if any).
         fields = extract_fields(p, variant)
 
@@ -74,23 +88,23 @@ def get_part_groups_altium(in_file, ignore_fields, variant):
         # concatenation of the library and part names.
         #~ libparts[str(fields['libpart'] + SEPRTR + fields['reference'])] = fields
         libparts[fields['libpart'] + SEPRTR + fields['reference']] = fields
-        
+
         # Also have to store the fields under any part aliases.
         try:
             for alias in p.find('aliases').find_all('alias'):
                 libparts[str(fields['libpart'] + SEPRTR + alias.string)] = fields
         except AttributeError:
             pass  # No aliases for this part.
-        
+
         hash_fields = {k: fields[k] for k in fields if k not in ('manf#','manf') and SEPRTR not in k}
         h = hash(tuple(sorted(hash_fields.items())))
-        
+
         component_groups[h] = IdenticalComponents()  # Add empty structure.
         component_groups[h].fields = fields
         component_groups[h].refs = p['designator1'].replace(' ','').split(',')  # Init list of refs with first ref.
         # Now add the manf. part num (or None) for this part to the group set.
         component_groups[h].manf_nums = set([fields.get('manf#')])
-        
+
     # Now we have groups of seemingly identical parts. But some of the parts
     # within a group may have different manufacturer's part numbers, and these
     # groups may need to be split into smaller groups of parts all having the
@@ -136,8 +150,8 @@ def get_part_groups_altium(in_file, ignore_fields, variant):
     return list(new_component_groups.values()), prj_info
 
 if __name__=='__main__':
-	
+
 	file_handle=open('meacs.xml')
 	#~ file_handle=open('wiSensAFE.xml')
-	
+
 	get_part_groups_altium(file_handle,'','')

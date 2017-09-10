@@ -135,6 +135,8 @@ def get_part_html_tree(dist, pn, extra_search_terms='', url=None, descend=2, loc
         except WEB_SCRAPE_EXCEPTIONS:
             logger.log(DEBUG_DETAILED,'Exception while web-scraping {} from {}'.format(pn, dist))
             pass
+        except UnicodeEncodeError:
+            logger.log(DEBUG_DETAILED,'Exception while web-scraping {} from {}: The part number code is not in ascii format'.format(pn, dist))
     else: # Couldn't get a good read from the website.
         logger.log(DEBUG_OBSESSIVE,'No HTML page for {} from {}'.format(pn, dist))
         raise PartHtmlError
@@ -144,7 +146,7 @@ def get_part_html_tree(dist, pn, extra_search_terms='', url=None, descend=2, loc
     if re.sub('[\W_]','',str.lower(pn)) not in re.sub('[\W_]','',str.lower(str(html))):
         logger.log(DEBUG_OBSESSIVE,'No part number {} in HTML page from {}'.format(pn, dist))
         raise PartHtmlError
-    
+
     try:
         tree = BeautifulSoup(html, 'lxml')
     except Exception:

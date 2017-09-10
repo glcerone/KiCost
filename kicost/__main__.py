@@ -34,6 +34,7 @@ import os
 import sys
 import logging
 import time
+
 from .kicost import *
 from . import __version__
 
@@ -167,7 +168,7 @@ def main():
         num_processes = args.num_processes
 
     kicost(in_file=args.input, out_filename=args.output,
-        user_fields=args.fields, ignore_fields=args.ignore_fields, 
+        user_fields=args.fields, ignore_fields=args.ignore_fields,
         variant=args.variant, num_processes=num_processes, is_altium=args.altium,
         exclude_dist_list=args.exclude, include_dist_list=args.include)
 
